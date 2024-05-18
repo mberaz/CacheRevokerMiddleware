@@ -2,20 +2,24 @@
 {
     public interface ICache
     {
-        Task Revoke(string key);
+        Task Revoke(string domain, string key);
         Task RevokeDomain(string domain);
     }
 
     public class MyCache : ICache
     {
-        public Task Revoke(string key)
+        public Task Revoke(string domain, string? key)
         {
-            throw new NotImplementedException();
+            if (key == null)
+            {
+                return RevokeDomain(domain);
+            }
+            return Task.CompletedTask;
         }
 
         public Task RevokeDomain(string domain)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
     }
 }
