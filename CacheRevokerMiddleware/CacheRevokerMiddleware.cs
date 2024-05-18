@@ -39,21 +39,33 @@ namespace CacheRevokerMiddleware
             //enable the body to be read more than once
             //so the model binding can use id
             context.Request.EnableBuffering();
-
-            var requestBody = await ReadAsStringAsync(context.Request);
+            using StreamReader reader = new(context.Request.Body, leaveOpen: true);
+            var requestBody = await reader.ReadToEndAsync();
 
             //rewind the request to the start
             context.Request.Body.Position = 0;
             return requestBody;
         }
 
-        public static async Task<string> ReadAsStringAsync(HttpRequest request)
+        private string? GetRequestKey(HttpRequest request, string keyParam, string requestBody)
         {
-            using StreamReader reader = new(request.Body, leaveOpen: true);
-            return await reader.ReadToEndAsync();
+            //try the key in lower case id
+            var key = GetKeyFromRequestBody(keyParam , request, requestBody);
+            if (key != null)
+            {
+                return key;
+            }
+            //change the first letter to upper Id
+            key = GetKeyFromRequestBody(ToCamelCase(keyParam), request, requestBody);
+            if (key != null)
+            {
+                return key;
+            }
+            //try in all upper case
+            return GetKeyFromRequestBody(keyParam.ToUpper(), request, requestBody) ?? null;
         }
 
-        private string GetRequestKey(HttpRequest request, string keyParam, string requestBody)
+        private string? GetKeyFromRequestBody(string keyParam, HttpRequest request, string requestBody)
         {
             if (request.RouteValues.TryGetValue(keyParam, out var keyValue))
             {
@@ -72,6 +84,11 @@ namespace CacheRevokerMiddleware
             }
 
             return null;
+        }
+
+        public static string ToCamelCase(string str)
+        {
+            return char.ToUpper(str[0]) + str[1..];
         }
     }
 }

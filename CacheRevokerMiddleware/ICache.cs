@@ -2,7 +2,7 @@
 {
     public interface ICache
     {
-        Task Revoke(string domain, string key);
+        Task Revoke(string domain, string? key);
         Task RevokeDomain(string domain);
     }
 
